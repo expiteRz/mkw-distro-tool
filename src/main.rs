@@ -40,12 +40,15 @@ impl Sandbox for MyButton {
         Column::new().push(Button::new(&mut self.button_state, Text::new("Button"))
             .on_press(Message::ButtonPressed)
         ).push(Text::new(&self.test_text))
-            .into()
+            .padding(20).into()
     }
 }
 
 fn main() -> iced::Result {
     // Sandbox を実装した State (Counter) を実行する
     // Settings を変更すれば、ウィンドウサイズ等の設定が変更可能
-    MyButton::run(Settings::default())
+    let mut set = Settings::default();
+    set.window.size = (512, 384);
+    set.window.resizable = false;
+    MyButton::run(set)
 }
