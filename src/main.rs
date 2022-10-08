@@ -6,7 +6,7 @@ mod helpers;
 use crate::apps::{CheatCodeApp, SettingApp, TrackDefApp, View};
 use eframe::emath::Align;
 use eframe::{App, Frame};
-use egui::{Context, Layout};
+use egui::{Context, Layout, ScrollArea};
 use std::process::exit;
 
 const APP_NAME: &'static str = "mkw-distro-tool";
@@ -63,7 +63,9 @@ impl App for Distro {
         /// Later replacing track listing app
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Track Listing");
-            apps::tracks::test_view(ui);
+            ScrollArea::horizontal().auto_shrink([true; 2]).show(ui, |ui| {
+                apps::tracks::test_view(ui);
+            });
 
             if self.close_confirm_dialog {
                 self.close_confirm(ctx, _frame);
