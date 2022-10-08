@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,3 +25,18 @@ jobs:
       with:
         name: debug-linux
         path: ./target/debug/mkw-distro-tool
+  
+  build-win:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        cargo build --verbose
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with: 
+        name: debug-windows
+        path: ./target/debug/mkw-debug-tool
