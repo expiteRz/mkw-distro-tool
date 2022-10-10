@@ -1,5 +1,11 @@
+use std::vec;
+
 pub struct TrackDefinition {
-    pub tracks: Vec<Track>,
+    pub cups: Vec<Cup>,
+}
+
+pub struct Cup {
+    pub trackset: Vec<Track>,
 }
 
 pub struct Track {
@@ -20,7 +26,15 @@ pub enum GroupFlag {
 impl Default for TrackDefinition {
     fn default() -> Self {
         Self {
-            tracks: vec![
+            cups: vec![Cup::default()],
+        }
+    }
+}
+
+impl Default for Cup {
+    fn default() -> Self {
+        Self {
+            trackset: vec![
                 Track::default(),
                 Track::default(),
                 Track::default(),
@@ -46,26 +60,40 @@ impl Default for Track {
 impl Track {
     pub fn view(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            // Property
-            egui::ComboBox::new("property", "")
-                .selected_text(self.property.as_str())
+            ui.add(
+                egui::TextEdit::singleline(&mut "Track name")
+                    .desired_width(150.0)
+                    .hint_text("Track name"),
+            );
+            ui.separator();
+            egui::ComboBox::new(format!("property_{}", self.id), "Property")
+                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
+                .width(130.0)
                 .show_ui(ui, |ui| {
                     for x in Id::VALUES {
-                        ui.selectable_value(&mut &self.property, &x, format!("{}", x.as_str()));
+                        ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
                     }
                 });
-            // Music
-            egui::ComboBox::new("music", "")
-                .selected_text(self.music.as_str())
+            ui.separator();
+            egui::ComboBox::new(format!("music_{}", self.id), "Music")
+                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
+                .width(150.0)
                 .show_ui(ui, |ui| {
                     for x in 0..(Id::VALUES.len() - 1) {
                         ui.selectable_value(
-                            &mut &self.music,
+                            &mut &Id::LuigiCircuit,
                             &Id::VALUES[x],
                             format!("{}", Id::VALUES[x].as_str()),
                         );
                     }
-                })
+                });
+            ui.separator();
+            ui.add(
+                egui::TextEdit::singleline(&mut "path to track file")
+                    .desired_width(200.0)
+                    .hint_text("Path to track file"),
+            );
+            ui.button("...");
         });
     }
 }
@@ -216,36 +244,47 @@ impl Id {
 }
 
 /// Test widget
+#[deprecated(note = "This function is defined for testing layout")]
 pub fn test_view(ui: &mut egui::Ui) {
-    let mut test_track_layout = |id: usize| {ui.horizontal(|ui| {
-        ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
-        ui.separator();
-        egui::ComboBox::new(format!("property_{}", id), "Property")
-            .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-            .width(130.0)
-            .show_ui(ui, |ui| {
-                for x in Id::VALUES {
-                    ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
-                }}
+    let mut test_track_layout = |id: usize| {
+        ui.horizontal(|ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut "Track name")
+                    .desired_width(150.0)
+                    .hint_text("Track name"),
             );
-        ui.separator();
-        egui::ComboBox::new(format!("music_{}", id), "Music")
-            .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-            .width(150.0)
-            .show_ui(ui, |ui| {
-                for x in 0..(Id::VALUES.len() - 1) {
-                    ui.selectable_value(
-                        &mut &Id::LuigiCircuit,
-                        &Id::VALUES[x],
-                        format!("{}", Id::VALUES[x].as_str()),
-                    );
-                }
-            });
-        ui.separator();
-        ui.add(egui::TextEdit::singleline(&mut "path to track file").hint_text("Path to track file"));
-        ui.small_button("...");
-    });};
-    for x in 0..4{
+            ui.separator();
+            egui::ComboBox::new(format!("property_{}", id), "Property")
+                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
+                .width(130.0)
+                .show_ui(ui, |ui| {
+                    for x in Id::VALUES {
+                        ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
+                    }
+                });
+            ui.separator();
+            egui::ComboBox::new(format!("music_{}", id), "Music")
+                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
+                .width(150.0)
+                .show_ui(ui, |ui| {
+                    for x in 0..(Id::VALUES.len() - 1) {
+                        ui.selectable_value(
+                            &mut &Id::LuigiCircuit,
+                            &Id::VALUES[x],
+                            format!("{}", Id::VALUES[x].as_str()),
+                        );
+                    }
+                });
+            ui.separator();
+            ui.add(
+                egui::TextEdit::singleline(&mut "path to track file")
+                    .desired_width(200.0)
+                    .hint_text("Path to track file"),
+            );
+            ui.button("...");
+        });
+    };
+    for x in 0..4 {
         test_track_layout(x);
     }
 }

@@ -1,6 +1,6 @@
 use crate::apps::{CloudShrinkTime, SettingApp, SpeedometerMode, View};
 use crate::helpers::Range;
-use egui::{Align, Checkbox, Context, Layout, Slider, SelectableLabel};
+use egui::{Align, Context, Layout, SelectableLabel, Slider};
 
 impl Default for SettingApp {
     fn default() -> Self {

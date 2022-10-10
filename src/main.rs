@@ -59,12 +59,16 @@ impl App for Distro {
         self.settings.ui(ctx);
         self.codes.ui(ctx);
 
-        /// Temporarily set panel
-        /// Later replacing track listing app
+        // Temporarily set panel
+        // Later replacing track listing app
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Track Listing");
-            ScrollArea::horizontal().auto_shrink([true; 2]).show(ui, |ui| {
-                apps::tracks::test_view(ui);
+            ui.group(|ui|{
+                ScrollArea::horizontal()
+                    .auto_shrink([true; 2])
+                    .show(ui, |ui| {
+                        apps::tracks::test_view(ui);
+                    });
             });
 
             if self.close_confirm_dialog {
