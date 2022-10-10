@@ -6,7 +6,8 @@ mod helpers;
 use crate::apps::{CheatCodeApp, SettingApp, TrackDefApp, View};
 use eframe::emath::Align;
 use eframe::{App, Frame};
-use egui::{Context, Layout, ScrollArea};
+use egui::{Context, ImageButton, Layout, ScrollArea};
+use egui_extras::RetainedImage;
 use std::process::exit;
 
 const APP_NAME: &'static str = "mkw-distro-tool";
@@ -63,12 +64,45 @@ impl App for Distro {
         // Later replacing track listing app
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Track Listing");
-            ui.group(|ui|{
-                ScrollArea::horizontal()
-                    .auto_shrink([true; 2])
-                    .show(ui, |ui| {
-                        apps::tracks::test_view(ui);
+            ui.horizontal(|ui| {
+                ui.group(|ui| {
+                    ui.vertical(|ui| {
+                        ui.text_edit_singleline(&mut "Cup name");
+                        ui.horizontal(|ui| {
+                            ui.group(|ui| {
+                                let texture = RetainedImage::from_image_bytes(
+                                    "CUPA.png",
+                                    include_bytes!("../res/CUPA.png"),
+                                )
+                                .unwrap();
+                                if ui
+                                    .add_sized(
+                                        [64.0, 64.0],
+                                        egui::ImageButton::new(
+                                            texture.texture_id(ctx),
+                                            [64.0, 64.0],
+                                        ),
+                                    )
+                                    .clicked()
+                                {
+                                    rfd::FileDialog::new()
+                                        .add_filter(
+                                            "Image file",
+                                            &["png", "gif", "jpg", "jpeg", "bmp", "svg"],
+                                        )
+                                        .pick_file();
+                                }
+                            });
+                            ScrollArea::horizontal()
+                                .auto_shrink([false; 2])
+                                .show(ui, |ui| {
+                                    ui.vertical(|ui| {
+                                        apps::tracks::test_view(ui);
+                                    })
+                                });
+                        });
                     });
+                });
             });
 
             if self.close_confirm_dialog {

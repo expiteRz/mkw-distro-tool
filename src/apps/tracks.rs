@@ -246,8 +246,9 @@ impl Id {
 /// Test widget
 #[deprecated(note = "This function is defined for testing layout")]
 pub fn test_view(ui: &mut egui::Ui) {
-    let mut test_track_layout = |id: usize| {
+    let test_track_layout = |ui: &mut egui::Ui, id: usize| {
         ui.horizontal(|ui| {
+            ui.button("+").on_hover_text("Add child track");
             ui.add(
                 egui::TextEdit::singleline(&mut "Track name")
                     .desired_width(150.0)
@@ -284,7 +285,64 @@ pub fn test_view(ui: &mut egui::Ui) {
             ui.button("...");
         });
     };
+
+    let child_track_layout = |ui: &mut egui::Ui, id: usize| {
+        ui.horizontal(|ui| {
+            ui.add_space(8.0);
+            ui.group(|ui| {
+                ui.vertical(|ui| {
+                    for xc in 0..2 {
+                        ui.horizontal(|ui| {
+                            ui.button("-");
+                            ui.add(
+                                egui::TextEdit::singleline(&mut "Track name")
+                                    .desired_width(150.0)
+                                    .hint_text("Track name"),
+                            );
+                            ui.separator();
+                            egui::ComboBox::new(format!("property_child_{}", xc), "Property")
+                                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
+                                .width(130.0)
+                                .show_ui(ui, |ui| {
+                                    for x in Id::VALUES {
+                                        ui.selectable_value(
+                                            &mut &Id::LuigiCircuit,
+                                            &x,
+                                            format!("{}", x.as_str()),
+                                        );
+                                    }
+                                });
+                            ui.separator();
+                            egui::ComboBox::new(format!("music_{}", xc), "Music")
+                                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
+                                .width(150.0)
+                                .show_ui(ui, |ui| {
+                                    for x in 0..(Id::VALUES.len() - 1) {
+                                        ui.selectable_value(
+                                            &mut &Id::LuigiCircuit,
+                                            &Id::VALUES[x],
+                                            format!("{}", Id::VALUES[x].as_str()),
+                                        );
+                                    }
+                                });
+                            ui.separator();
+                            ui.add(
+                                egui::TextEdit::singleline(&mut "path to track file")
+                                    .desired_width(200.0)
+                                    .hint_text("Path to track file"),
+                            );
+                            ui.button("...");
+                        });
+                    }
+                })
+            });
+        })
+    };
+
     for x in 0..4 {
-        test_track_layout(x);
+        test_track_layout(ui, x);
+        if x == 2 {
+            child_track_layout(ui, x);
+        }
     }
 }

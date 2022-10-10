@@ -116,10 +116,12 @@ impl View for SettingApp {
                         ui.toggle_value(&mut self.toggle_drag_blue, "Enable").on_hover_text("Allow player to drag blue shell");
                     });
                 });
-                ui.horizontal(|ui| {
-                    ui.label("Thundercloud Shrink Time");
+                ui.label("Thundercloud Shrink Time").on_hover_text("Time in frames a player is small after being struck by a thundercloud");
+                ui.horizontal(|ui|{
+                    ui.selectable_value(&mut self.time_cloud, CloudShrinkTime::Nintendo as i16, "Nintendo").on_hover_text("Set as default");
+                    ui.selectable_value(&mut self.time_cloud, CloudShrinkTime::LECODE as i16, "LE-CODE").on_hover_text("Set as default but for LE-CODE");
                     ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-                        ui.text_edit_singleline(&mut "300");
+                        ui.add(egui::DragValue::new(&mut self.time_cloud).clamp_range(1..=32767))
                     })
                 })
             });
