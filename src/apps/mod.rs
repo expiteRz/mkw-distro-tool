@@ -1,9 +1,8 @@
 use crate::apps::tracks::TrackDefinition;
-use crate::helpers::Range;
 use egui::Context;
 
-mod codes;
-mod settings;
+pub mod codes;
+pub mod settings;
 pub mod tracks;
 
 #[derive(PartialEq)]
@@ -31,7 +30,6 @@ pub struct State {
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 pub struct SettingApp {
-    pub engine_prob_range: Range,
     // ENABLE-200CC
     pub toggle_200cc: bool,
     // ENGINE
@@ -43,7 +41,7 @@ pub struct SettingApp {
     // XPFLAGS
     pub toggle_custom_presence: bool,
     // BLOCK-TRACK
-    pub prevent_selection_online: i32,
+    pub prevent_selection_online: i8,
     // SPEEDOMETER
     pub toggle_som: SpeedometerMode,
     // DRAG-BLUE-SHELL
@@ -110,15 +108,17 @@ pub struct EngineProbSet {
 
 impl Default for EngineProbSet {
     fn default() -> Self {
-        Self {
-            low: 10,
-            mid: 60,
-            high: 30,
-        }
+        Self { low: 10, mid: 60, high: 30 }
     }
 }
 
 pub trait View {
     fn name(&self) -> &'static str;
     fn ui(&mut self, ctx: &Context);
+}
+
+impl CheatCodeApp {
+    pub(crate) fn enabled(&self) -> bool {
+        self.enabled
+    }
 }

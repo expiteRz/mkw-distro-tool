@@ -5,6 +5,8 @@ pub struct TrackDefinition {
 }
 
 pub struct Cup {
+    /// path to image
+    pub icon: &'static [u8],
     pub trackset: Vec<Track>,
 }
 
@@ -25,21 +27,15 @@ pub enum GroupFlag {
 
 impl Default for TrackDefinition {
     fn default() -> Self {
-        Self {
-            cups: vec![Cup::default()],
-        }
+        Self { cups: vec![Cup::default()] }
     }
 }
 
 impl Default for Cup {
     fn default() -> Self {
         Self {
-            trackset: vec![
-                Track::default(),
-                Track::default(),
-                Track::default(),
-                Track::default(),
-            ],
+            icon: &[],
+            trackset: vec![Track::default(), Track::default(), Track::default(), Track::default()],
         }
     }
 }
@@ -60,11 +56,7 @@ impl Default for Track {
 impl Track {
     pub fn view(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut "Track name")
-                    .desired_width(150.0)
-                    .hint_text("Track name"),
-            );
+            ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
             ui.separator();
             egui::ComboBox::new(format!("property_{}", self.id), "Property")
                 .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
@@ -80,11 +72,7 @@ impl Track {
                 .width(150.0)
                 .show_ui(ui, |ui| {
                     for x in 0..(Id::VALUES.len() - 1) {
-                        ui.selectable_value(
-                            &mut &Id::LuigiCircuit,
-                            &Id::VALUES[x],
-                            format!("{}", Id::VALUES[x].as_str()),
-                        );
+                        ui.selectable_value(&mut &Id::LuigiCircuit, &Id::VALUES[x], format!("{}", Id::VALUES[x].as_str()));
                     }
                 });
             ui.separator();
@@ -243,17 +231,13 @@ impl Id {
     }
 }
 
-/// Test widget
+/// Test widget definition for layouting
 #[deprecated(note = "This function is defined for testing layout")]
 pub fn test_view(ui: &mut egui::Ui) {
     let test_track_layout = |ui: &mut egui::Ui, id: usize| {
         ui.horizontal(|ui| {
             ui.button("+").on_hover_text("Add child track");
-            ui.add(
-                egui::TextEdit::singleline(&mut "Track name")
-                    .desired_width(150.0)
-                    .hint_text("Track name"),
-            );
+            ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
             ui.separator();
             egui::ComboBox::new(format!("property_{}", id), "Property")
                 .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
@@ -269,17 +253,13 @@ pub fn test_view(ui: &mut egui::Ui) {
                 .width(150.0)
                 .show_ui(ui, |ui| {
                     for x in 0..(Id::VALUES.len() - 1) {
-                        ui.selectable_value(
-                            &mut &Id::LuigiCircuit,
-                            &Id::VALUES[x],
-                            format!("{}", Id::VALUES[x].as_str()),
-                        );
+                        ui.selectable_value(&mut &Id::LuigiCircuit, &Id::VALUES[x], format!("{}", Id::VALUES[x].as_str()));
                     }
                 });
             ui.separator();
             ui.add(
                 egui::TextEdit::singleline(&mut "path to track file")
-                    .desired_width(200.0)
+                    .desired_width(300.0)
                     .hint_text("Path to track file"),
             );
             ui.button("...");
@@ -294,22 +274,14 @@ pub fn test_view(ui: &mut egui::Ui) {
                     for xc in 0..2 {
                         ui.horizontal(|ui| {
                             ui.button("-");
-                            ui.add(
-                                egui::TextEdit::singleline(&mut "Track name")
-                                    .desired_width(150.0)
-                                    .hint_text("Track name"),
-                            );
+                            ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
                             ui.separator();
                             egui::ComboBox::new(format!("property_child_{}", xc), "Property")
                                 .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
                                 .width(130.0)
                                 .show_ui(ui, |ui| {
                                     for x in Id::VALUES {
-                                        ui.selectable_value(
-                                            &mut &Id::LuigiCircuit,
-                                            &x,
-                                            format!("{}", x.as_str()),
-                                        );
+                                        ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
                                     }
                                 });
                             ui.separator();
@@ -318,17 +290,13 @@ pub fn test_view(ui: &mut egui::Ui) {
                                 .width(150.0)
                                 .show_ui(ui, |ui| {
                                     for x in 0..(Id::VALUES.len() - 1) {
-                                        ui.selectable_value(
-                                            &mut &Id::LuigiCircuit,
-                                            &Id::VALUES[x],
-                                            format!("{}", Id::VALUES[x].as_str()),
-                                        );
+                                        ui.selectable_value(&mut &Id::LuigiCircuit, &Id::VALUES[x], format!("{}", Id::VALUES[x].as_str()));
                                     }
                                 });
                             ui.separator();
                             ui.add(
                                 egui::TextEdit::singleline(&mut "path to track file")
-                                    .desired_width(200.0)
+                                    .desired_width(300.0)
                                     .hint_text("Path to track file"),
                             );
                             ui.button("...");

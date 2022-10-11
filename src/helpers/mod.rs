@@ -1,7 +1,5 @@
-pub mod custom_widget;
+use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq)]
-pub struct Range {
-    pub min: f64,
-    pub max: f64,
-}
+pub mod custom_widget;
+pub mod file;
+pub mod parser;

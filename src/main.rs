@@ -5,9 +5,11 @@ mod helpers;
 
 use crate::apps::{CheatCodeApp, SettingApp, TrackDefApp, View};
 use eframe::emath::Align;
+use eframe::epaint::tessellator::path;
 use eframe::{App, Frame};
-use egui::{Context, ImageButton, Layout, ScrollArea};
+use egui::{Context, Layout, ScrollArea};
 use egui_extras::RetainedImage;
+use std::path::PathBuf;
 use std::process::exit;
 
 const APP_NAME: &'static str = "mkw-distro-tool";
@@ -36,6 +38,8 @@ fn main() {
 struct Distro {
     close_confirm_dialog: bool,
     allow_to_close: bool,
+    //-- loaded file
+    path: Option<PathBuf>,
     //-- Any apps
     tracks: TrackDefApp,
     settings: SettingApp,
@@ -50,6 +54,7 @@ impl Default for Distro {
             tracks: Default::default(),
             settings: Default::default(),
             codes: Default::default(),
+            path: None,
         }
     }
 }
@@ -70,36 +75,21 @@ impl App for Distro {
                         ui.text_edit_singleline(&mut "Cup name");
                         ui.horizontal(|ui| {
                             ui.group(|ui| {
-                                let texture = RetainedImage::from_image_bytes(
-                                    "CUPA.png",
-                                    include_bytes!("../res/CUPA.png"),
-                                )
-                                .unwrap();
+                                let texture = RetainedImage::from_image_bytes("CUPA.png", include_bytes!("../res/CUPA.png")).unwrap();
                                 if ui
-                                    .add_sized(
-                                        [64.0, 64.0],
-                                        egui::ImageButton::new(
-                                            texture.texture_id(ctx),
-                                            [64.0, 64.0],
-                                        ),
-                                    )
+                                    .add_sized([64.0, 64.0], egui::ImageButton::new(texture.texture_id(ctx), [64.0, 64.0]))
                                     .clicked()
                                 {
                                     rfd::FileDialog::new()
-                                        .add_filter(
-                                            "Image file",
-                                            &["png", "gif", "jpg", "jpeg", "bmp", "svg"],
-                                        )
+                                        .add_filter("Image file", &["png", "gif", "jpg", "jpeg", "bmp", "svg"])
                                         .pick_file();
                                 }
                             });
-                            ScrollArea::horizontal()
-                                .auto_shrink([false; 2])
-                                .show(ui, |ui| {
-                                    ui.vertical(|ui| {
-                                        apps::tracks::test_view(ui);
-                                    })
-                                });
+                            ScrollArea::horizontal().auto_shrink([false; 2]).show(ui, |ui| {
+                                ui.vertical(|ui| {
+                                    apps::tracks::test_view(ui);
+                                })
+                            });
                         });
                     });
                 });
@@ -119,10 +109,7 @@ impl App for Distro {
 
 impl Distro {
     fn close_confirm(&mut self, ctx: &Context, frame: &mut Frame) {
-        let (x, y) = (
-            frame.info().window_info.size.x,
-            frame.info().window_info.size.y,
-        );
+        let (x, y) = (frame.info().window_info.size.x, frame.info().window_info.size.y);
         egui::Window::new("Confirm")
             .title_bar(true)
             .default_width(400.0)
@@ -131,13 +118,15 @@ impl Distro {
             .fixed_pos([(x / 2.0) - 100.0, y / 2.5])
             .show(ctx, |ui| {
                 ui.label("Are you sure to close this application?");
-                ui.horizontal_wrapped(|ui| {
-                    if ui.button("Yes").clicked() {
-                        exit(0);
-                    }
-                    if ui.button("No").clicked() {
-                        self.close_confirm_dialog = false;
-                    }
+                ui.vertical_centered_justified(|ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        if ui.button("Yes").clicked() {
+                            exit(0);
+                        }
+                        if ui.button("No").clicked() {
+                            self.close_confirm_dialog = false;
+                        }
+                    })
                 })
             });
     }
@@ -153,22 +142,23 @@ impl Distro {
                         self.settings = Default::default();
                     }
                     if ui.button("Open Project").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .add_filter(".mkdstprj", &["mkdistprj"])
-                            .pick_file()
-                        {
-                            println!("{:?}", path);
+                        if let Some(path) = rfd::FileDialog::new().add_filter(".mkdstprj", &["mkdistprj"]).pick_file() {
+                            self.open_file(&path);
                         }
                     }
                     ui.separator();
                     if ui.button("Save").clicked() {
                         println!("File:Save");
+                        if self.path.is_none() {
+                            match rfd::FileDialog::new().add_filter(".mkdstprj", &["mkdistprj"]).save_file() {
+                                Some(path) => self.path = Some(path),
+                                None => return,
+                            }
+                        }
+                        self.save_file(self.path.as_ref().unwrap());
                     }
                     if ui.button("Save as new").clicked() {
-                        if let Some(dest) = rfd::FileDialog::new()
-                            .add_filter(".mkdstprj", &["mkdistprj"])
-                            .save_file()
-                        {
+                        if let Some(dest) = rfd::FileDialog::new().add_filter(".mkdstprj", &["mkdistprj"]).save_file() {
                             println!("{:?}", dest);
                         }
                     }
