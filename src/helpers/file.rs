@@ -10,6 +10,10 @@ impl Distro {
     }
 
     pub fn open_file(&mut self, path: &PathBuf) {
-        self.decode(path);
+        let d = self.decode(path).unwrap();
+
+        self.path = d.path;
+        self.codes = d.codes;
+        self.settings = d.settings;
     }
 }

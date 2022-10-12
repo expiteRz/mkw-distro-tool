@@ -59,6 +59,19 @@ pub enum SpeedometerMode {
     Three,
 }
 
+impl SpeedometerMode {
+    pub(crate) fn from_usize(n: usize) -> Option<Self> {
+        match n {
+            0 => Some(SpeedometerMode::None),
+            1 => Some(SpeedometerMode::Show),
+            2 => Some(SpeedometerMode::One),
+            3 => Some(SpeedometerMode::Two),
+            4 => Some(SpeedometerMode::Three),
+            _ => None,
+        }
+    }
+}
+
 #[derive(PartialEq)]
 pub enum CloudShrinkTime {
     Nintendo = 612,

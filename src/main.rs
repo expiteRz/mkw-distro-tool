@@ -1,11 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![feature(slice_take)]
 
 mod apps;
 mod helpers;
 
 use crate::apps::{CheatCodeApp, SettingApp, TrackDefApp, View};
 use eframe::emath::Align;
-use eframe::epaint::tessellator::path;
 use eframe::{App, Frame};
 use egui::{Context, Layout, ScrollArea};
 use egui_extras::RetainedImage;
@@ -37,7 +37,9 @@ fn main() {
 
 struct Distro {
     close_confirm_dialog: bool,
+    confirm_dialog: bool,
     allow_to_close: bool,
+    disallow_to_ingnore_change: bool,
     //-- loaded file
     path: Option<PathBuf>,
     //-- Any apps
@@ -55,13 +57,16 @@ impl Default for Distro {
             settings: Default::default(),
             codes: Default::default(),
             path: None,
+            confirm_dialog: false,
+            disallow_to_ingnore_change: false,
         }
     }
 }
 
 impl App for Distro {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-        self.view_top_menu(ctx);
+        _frame.set_window_title(&self.gen_title());
+        self.view_top_menu(ctx, _frame);
         self.settings.ui(ctx);
         self.codes.ui(ctx);
 
@@ -108,6 +113,14 @@ impl App for Distro {
 }
 
 impl Distro {
+    fn gen_title(&self) -> String {
+        if self.path.is_none() || self.path.as_ref().unwrap().to_str().unwrap() == "" {
+            return format!("{}", APP_NAME);
+        }
+        
+        format!("{} - {}", APP_NAME, self.path.as_ref().unwrap().to_str().unwrap())
+    }
+
     fn close_confirm(&mut self, ctx: &Context, frame: &mut Frame) {
         let (x, y) = (frame.info().window_info.size.x, frame.info().window_info.size.y);
         egui::Window::new("Confirm")
@@ -131,14 +144,41 @@ impl Distro {
             });
     }
 
-    fn view_top_menu(&mut self, ctx: &Context) {
+    fn any_confirm(&mut self, ctx: &Context, frame: &mut Frame, message: &str) -> bool {
+        let mut consider = false;
+        let (x, y) = (frame.info().window_info.size.x, frame.info().window_info.size.y);
+        egui::Window::new("Confirm")
+            .title_bar(true)
+            .default_width(400.0)
+            .collapsible(false)
+            .resizable(false)
+            .fixed_pos([(x / 2.0) - 100.0, y / 2.5])
+            .show(ctx, |ui| {
+                ui.label(message);
+                ui.horizontal(|ui| {
+                    if ui.button("Yes").clicked() {
+                        self.confirm_dialog = false;
+                        self.disallow_to_ingnore_change = true;
+                        consider = true;
+                    }
+                    if ui.button("No").clicked() {
+                        self.confirm_dialog = false;
+                        self.disallow_to_ingnore_change = false;
+                        consider = false;
+                    }
+                })
+            });
+        
+        consider
+    }
+
+    fn view_top_menu(&mut self, ctx: &Context, frame: &mut Frame) {
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
                 ui.menu_button("File", |ui| {
                     if ui.button("New Project").clicked() {
-                        println!("File:New Project");
                         self.settings = Default::default();
                     }
                     if ui.button("Open Project").clicked() {
@@ -158,9 +198,11 @@ impl Distro {
                         self.save_file(self.path.as_ref().unwrap());
                     }
                     if ui.button("Save as new").clicked() {
-                        if let Some(dest) = rfd::FileDialog::new().add_filter(".mkdstprj", &["mkdistprj"]).save_file() {
-                            println!("{:?}", dest);
+                        match rfd::FileDialog::new().add_filter(".mkdstprj", &["mkdistprj"]).save_file() {
+                            Some(path) => self.path = Some(path),
+                            None => return,
                         }
+                        self.save_file(self.path.as_ref().unwrap());
                     }
                     ui.separator();
                     ui.menu_button("Export", |ui| {

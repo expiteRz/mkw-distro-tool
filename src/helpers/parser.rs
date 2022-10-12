@@ -1,7 +1,11 @@
-use std::{vec, path::PathBuf, fs::{File, self}};
+use std::{
+    fs::{self},
+    path::PathBuf,
+    str, vec,
+};
 
 use crate::{
-    apps::{CheatCodeApp, SettingApp},
+    apps::{CheatCodeApp, EngineProbSet, SettingApp, SpeedometerMode},
     Distro,
 };
 
@@ -31,9 +35,28 @@ impl Distro {
         m
     }
 
-    pub fn decode(&mut self, path: &PathBuf) {
+    pub fn decode(&mut self, path: &PathBuf) -> Result<Self, ()> {
         let file = fs::read(path).unwrap();
-        assert_eq!(file[0..8], *MAGIC.as_bytes(), "they are matched.");
+        if str::from_utf8(&file[0..8]).unwrap() != MAGIC && &file[12..14] == FILE_BUILD_NUMBER.as_slice() {
+            return Err(());
+        }
+
+        let readable_size = as_u32_be(&file[8..12]) as usize;
+        let mut loc = &file[14..readable_size];
+
+        let cheat_enabled = loc.take(..2).unwrap()[1] != 0;
+
+        let distro = Self {
+            path: Some(path.to_path_buf()),
+            settings: decode_settings(loc),
+            codes: CheatCodeApp {
+                enabled: cheat_enabled,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        Ok(distro)
     }
 }
 
@@ -79,6 +102,23 @@ pub fn encode_cheats(c: &CheatCodeApp) -> (Vec<u8>, Vec<u8>) {
     (b.to_be_bytes().to_vec(), vec![])
 }
 
+fn decode_settings(a: &[u8]) -> SettingApp {
+    SettingApp {
+        toggle_200cc: a[0] != 0,
+        engine_probs: EngineProbSet {
+            low: as_u32_be(&a[1..5]) as i32,
+            mid: as_u32_be(&a[5..9]) as i32,
+            high: as_u32_be(&a[9..13]) as i32,
+        },
+        toggle_ct_tt: a[13] != 0,
+        toggle_custom_presence: a[14] != 0,
+        prevent_selection_online: a[15] as i8,
+        toggle_som: SpeedometerMode::from_usize(a[16].into()).unwrap(),
+        toggle_drag_blue: a[17] != 0,
+        time_cloud: as_u16_be(&a[18..20]) as i16,
+    }
+}
+
 // Code below brings from Stack Overflow (https://stackoverflow.com/questions/29530011/creating-a-vector-of-zeros-for-a-specific-size),
 // and edited to match our project
 fn zeros(size: usize) -> Vec<u8> {
@@ -87,4 +127,12 @@ fn zeros(size: usize) -> Vec<u8> {
         zero_vec.push(0);
     }
     return zero_vec;
+}
+
+fn as_u32_be(array: &[u8]) -> u32 {
+    ((array[0] as u32) << 24) + ((array[1] as u32) << 16) + ((array[2] as u32) << 8) + ((array[3] as u32) << 0)
+}
+
+fn as_u16_be(array: &[u8]) -> u16 {
+    ((array[0] as u16) << 8) + ((array[1] as u16) << 0)
 }

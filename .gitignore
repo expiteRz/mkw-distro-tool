@@ -4,3 +4,6 @@
 Cargo.lock
 *.bin
 rustfmt.toml
+
+// Custom Project File (^_^)b
+*.mkdistprj

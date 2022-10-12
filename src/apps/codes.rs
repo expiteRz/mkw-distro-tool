@@ -1,7 +1,8 @@
 use crate::apps::{CheatCodeApp, CodeStruct, Region};
 use crate::helpers::custom_widget::toggle_ui;
+use crate::helpers::layouter;
 use crate::{Align, View};
-use egui::{Context, Layout, ScrollArea, TextEdit, Ui};
+use egui::{Context, Layout, ScrollArea, TextEdit, Ui, FontSelection};
 use egui_extras::{Size, TableBuilder};
 
 impl Default for CheatCodeApp {
