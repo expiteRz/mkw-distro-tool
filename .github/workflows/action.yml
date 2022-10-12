@@ -16,9 +16,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Prepare nightly
-      run: |
-        sudo rustup install nightly
-        sudo rustup default nightly
+      uses: actions-rs/toolchains@v1
+      with:
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
+
     - name: Build
       run: |
         sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev
@@ -36,9 +39,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Prepare nightly
-      run: |
-        rustup install nightly
-        rustup default nightly
+      uses: actions-rs/toolchains@v1
+      with:
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
+
     - name: Build
       run: |
         cargo build --verbose
