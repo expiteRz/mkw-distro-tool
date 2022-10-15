@@ -121,13 +121,21 @@ pub struct EngineProbSet {
 
 impl Default for EngineProbSet {
     fn default() -> Self {
-        Self { low: 10, mid: 60, high: 30 }
+        Self {
+            low: 10,
+            mid: 60,
+            high: 30,
+        }
     }
 }
 
-pub trait View {
+pub trait MainView {
     fn name(&self) -> &'static str;
     fn ui(&mut self, ctx: &Context);
+}
+
+pub trait ElementView {
+    fn view(&mut self, ctx: &Context, ui: &mut egui::Ui);
 }
 
 impl CheatCodeApp {

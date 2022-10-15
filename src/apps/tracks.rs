@@ -1,22 +1,44 @@
 use std::vec;
 
+use egui::{Align, Layout, TextureId, Ui};
+use egui_extras::{RetainedImage, Size, TableBuilder};
+
+use super::{ElementView, MainView, TrackDefApp};
+
 pub struct TrackDefinition {
+    pub selected: usize,
     pub cups: Vec<Cup>,
 }
 
 pub struct Cup {
     /// path to image
-    pub icon: &'static [u8],
+    pub icon: Icon,
+    pub name: String,
     pub trackset: Vec<Track>,
 }
 
+pub struct Icon {
+    pub filename: String,
+    pub image: Vec<u8>,
+}
+
+impl Default for Icon {
+    fn default() -> Self {
+        Self {
+            filename: Default::default(),
+            image: Default::default(),
+        }
+    }
+}
+
 pub struct Track {
-    id: u16,
-    name: String,
-    property: Id,
-    music: Id,
-    flag: GroupFlag,
-    filename: String,
+    pub id: u16,
+    pub name: String,
+    pub author: String,
+    pub property: Id,
+    pub music: Id,
+    pub flag: GroupFlag,
+    pub filename: String,
 }
 
 pub enum GroupFlag {
@@ -25,18 +47,153 @@ pub enum GroupFlag {
     Child,
 }
 
+impl TrackDefinition {
+    fn gen_tables(&mut self, ui: &mut egui::Ui) {
+        let table = TableBuilder::new(ui)
+            .striped(true)
+            .cell_layout(Layout::left_to_right(Align::Center))
+            .column(Size::remainder().at_least(60.0));
+
+        table.body(|mut body| {
+            self.cups.iter_mut().enumerate().for_each(|(i, x)| {
+                body.row(17.0, |mut row| {
+                    row.col(|ui| {
+                        if ui
+                            .add_sized(
+                                ui.available_size(),
+                                egui::SelectableLabel::new(i == self.selected, &x.name),
+                            )
+                            .clicked()
+                        {
+                            self.selected = i;
+                        }
+                    });
+                })
+            })
+        })
+    }
+}
+
+impl MainView for TrackDefApp {
+    fn name(&self) -> &'static str {
+        "Track Listing"
+    }
+
+    fn ui(&mut self, ctx: &egui::Context) {
+        egui::SidePanel::right("cup_list")
+            .min_width(200.0)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.heading("Cup Listing");
+                ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
+                    if ui
+                        .button("Delete")
+                        .on_hover_text("Delete the selected cup")
+                        .clicked()
+                    {
+                        println!("Cup:Delete");
+                        if self.editor.cups.len() <= 1 {
+                            return;
+                        }
+                        let selected = self.editor.selected;
+                        self.editor.selected = if selected < 1 {
+                            self.editor.selected
+                        } else {
+                            self.editor.selected - 1
+                        };
+                        self.editor.cups.remove(selected);
+                    }
+                    if ui.button("Add").on_hover_text("Add a new cup").clicked() {
+                        self.editor.cups.push(Cup::default());
+                    }
+                });
+                self.editor.gen_tables(ui);
+            });
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading(self.name());
+            self.editor.cups[self.editor.selected].view(ctx, ui);
+        });
+    }
+}
+
 impl Default for TrackDefinition {
     fn default() -> Self {
-        Self { cups: vec![Cup::default()] }
+        Self {
+            selected: 0,
+            cups: vec![Cup::default()],
+        }
     }
 }
 
 impl Default for Cup {
     fn default() -> Self {
         Self {
-            icon: &[],
-            trackset: vec![Track::default(), Track::default(), Track::default(), Track::default()],
+            icon: Default::default(),
+            trackset: vec![
+                Track {
+                    id: 0,
+                    ..Default::default()
+                },
+                Track {
+                    id: 1,
+                    ..Default::default()
+                },
+                Track {
+                    id: 2,
+                    ..Default::default()
+                },
+                Track {
+                    id: 3,
+                    ..Default::default()
+                },
+            ],
+            name: "Cup".to_string(),
         }
+    }
+}
+
+impl ElementView for Cup {
+    fn view(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        let texture = if self.icon.filename.is_empty() && self.icon.image.is_empty() {
+            RetainedImage::from_color_image(
+                "None.png",
+                egui::ColorImage::from_rgba_unmultiplied([1; 2], &[0, 0, 0, 0]),
+            )
+        } else {
+            RetainedImage::from_image_bytes("CUPA.png", &self.icon.image).unwrap()
+        };
+
+        ui.group(|ui| {
+            ui.horizontal(|ui| {
+                if ui
+                    .add(egui::ImageButton::new(
+                        texture.texture_id(ctx),
+                        [64.0, 64.0],
+                    ))
+                    .on_hover_text("Select a image to set as cup icon")
+                    .context_menu(|ui| {
+                        if ui.button("Select a image").clicked() {
+                            self.open_image();
+                        }
+                        if ui.button("Remove image").clicked() {
+                            self.icon.filename = "".to_string();
+                            self.icon.image = vec![];
+                        }
+                    })
+                    .clicked()
+                {
+                    self.open_image();
+                }
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.name)
+                        .desired_width(300.0)
+                        .hint_text("Cup name"),
+                );
+            });
+            for track in &mut self.trackset {
+                track.view(ctx, ui);
+            }
+        });
     }
 }
 
@@ -44,49 +201,64 @@ impl Default for Track {
     fn default() -> Self {
         Self {
             id: 0,
-            name: "Null".to_string(),
+            name: "".to_string(),
             property: Id::MarioCircuit,
             music: Id::MarioCircuit,
             flag: GroupFlag::None,
-            filename: "null.szs".to_string(),
+            filename: "".to_string(),
+            author: "".to_string(),
         }
     }
 }
 
-impl Track {
-    pub fn view(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
-            ui.separator();
-            egui::ComboBox::new(format!("property_{}", self.id), "Property")
-                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-                .width(130.0)
-                .show_ui(ui, |ui| {
-                    for x in Id::VALUES {
-                        ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
+impl ElementView for Track {
+    fn view(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) {
+        ui.group(|ui| {
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.filename)
+                            .hint_text("Path to track file (*.szs)")
+                            .desired_width(400.0),
+                    );
+                    if ui
+                        .button("...")
+                        .on_hover_text("Select a SZS file")
+                        .clicked()
+                    {
+                        self.open_file();
                     }
                 });
-            ui.separator();
-            egui::ComboBox::new(format!("music_{}", self.id), "Music")
-                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-                .width(150.0)
-                .show_ui(ui, |ui| {
-                    for x in 0..(Id::VALUES.len() - 1) {
-                        ui.selectable_value(&mut &Id::LuigiCircuit, &Id::VALUES[x], format!("{}", Id::VALUES[x].as_str()));
-                    }
+                ui.separator();
+                ui.add(egui::TextEdit::singleline(&mut self.name).hint_text("Track name"));
+                ui.add(egui::TextEdit::singleline(&mut self.author).hint_text("Author name"));
+                ui.with_layout(Layout::left_to_right(egui::Align::Min), |ui| {
+                    egui::ComboBox::new(format!("property_{}", &mut self.id), "Property")
+                        .width(180.0)
+                        .selected_text(format!("{}", &mut self.property.as_str()))
+                        .show_ui(ui, |ui| {
+                            for v in Id::VALUES {
+                                if v == Id::GalaxyArena {
+                                    continue;
+                                }
+                                ui.selectable_value(&mut self.property, v, v.as_str());
+                            }
+                        });
+                    egui::ComboBox::new(format!("music_{}", &mut self.id), "Music")
+                        .width(180.0)
+                        .selected_text(format!("{}", &mut self.music.as_str()))
+                        .show_ui(ui, |ui| {
+                            for v in Id::VALUES {
+                                ui.selectable_value(&mut self.music, v, v.as_str());
+                            }
+                        });
                 });
-            ui.separator();
-            ui.add(
-                egui::TextEdit::singleline(&mut "path to track file")
-                    .desired_width(200.0)
-                    .hint_text("Path to track file"),
-            );
-            ui.button("...");
+            });
         });
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum Id {
     LuigiCircuit,
@@ -237,7 +409,11 @@ pub fn test_view(ui: &mut egui::Ui) {
     let test_track_layout = |ui: &mut egui::Ui, id: usize| {
         ui.horizontal(|ui| {
             ui.button("+").on_hover_text("Add child track");
-            ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
+            ui.add(
+                egui::TextEdit::singleline(&mut "Track name")
+                    .desired_width(150.0)
+                    .hint_text("Track name"),
+            );
             ui.separator();
             egui::ComboBox::new(format!("property_{}", id), "Property")
                 .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
@@ -253,7 +429,11 @@ pub fn test_view(ui: &mut egui::Ui) {
                 .width(150.0)
                 .show_ui(ui, |ui| {
                     for x in 0..(Id::VALUES.len() - 1) {
-                        ui.selectable_value(&mut &Id::LuigiCircuit, &Id::VALUES[x], format!("{}", Id::VALUES[x].as_str()));
+                        ui.selectable_value(
+                            &mut &Id::LuigiCircuit,
+                            &Id::VALUES[x],
+                            format!("{}", Id::VALUES[x].as_str()),
+                        );
                     }
                 });
             ui.separator();
@@ -274,7 +454,11 @@ pub fn test_view(ui: &mut egui::Ui) {
                     for xc in 0..2 {
                         ui.horizontal(|ui| {
                             ui.button("-");
-                            ui.add(egui::TextEdit::singleline(&mut "Track name").desired_width(150.0).hint_text("Track name"));
+                            ui.add(
+                                egui::TextEdit::singleline(&mut "Track name")
+                                    .desired_width(150.0)
+                                    .hint_text("Track name"),
+                            );
                             ui.separator();
                             egui::ComboBox::new(format!("property_child_{}", xc), "Property")
                                 .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
@@ -290,7 +474,11 @@ pub fn test_view(ui: &mut egui::Ui) {
                                 .width(150.0)
                                 .show_ui(ui, |ui| {
                                     for x in 0..(Id::VALUES.len() - 1) {
-                                        ui.selectable_value(&mut &Id::LuigiCircuit, &Id::VALUES[x], format!("{}", Id::VALUES[x].as_str()));
+                                        ui.selectable_value(
+                                            &mut &Id::LuigiCircuit,
+                                            &Id::VALUES[x],
+                                            format!("{}", Id::VALUES[x].as_str()),
+                                        );
                                     }
                                 });
                             ui.separator();

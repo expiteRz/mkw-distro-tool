@@ -1,5 +1,6 @@
 use std::{
     fs::{self},
+    io::Cursor,
     path::PathBuf,
     str, vec,
 };
@@ -10,7 +11,7 @@ use crate::{
 };
 
 const MAGIC: &'static str = "ZRP0DIB1";
-const FILE_BUILD_NUMBER: &'static [u8; 2] = &[0, 1]; // Later should be moved to other source code
+const FILE_BUILD_NUMBER: &'static [u8; 2] = &[0, 2]; // Later should be moved to other source code
 
 impl Distro {
     pub fn encode(&self) -> Vec<u8> {
@@ -117,6 +118,23 @@ fn decode_settings(a: &[u8]) -> SettingApp {
         toggle_drag_blue: a[17] != 0,
         time_cloud: as_u16_be(&a[18..20]) as i16,
     }
+}
+
+pub fn decode_image(path: PathBuf) -> Result<Vec<u8>, image::ImageError> {
+    let mut image: Vec<u8> = vec![];
+
+    match image::open(path) {
+        Ok(v) => {
+            v.resize(128, 128, image::imageops::FilterType::Triangle)
+                .write_to(&mut Cursor::new(&mut image), image::ImageOutputFormat::Png)
+                .unwrap();
+        }
+        Err(err) => {
+            return Err(err);
+        }
+    }
+
+    Ok(image)
 }
 
 // Code below brings from Stack Overflow (https://stackoverflow.com/questions/29530011/creating-a-vector-of-zeros-for-a-specific-size),
