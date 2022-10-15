@@ -50,7 +50,7 @@ pub struct SettingApp {
     pub time_cloud: i16,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum SpeedometerMode {
     None,
     Show,
