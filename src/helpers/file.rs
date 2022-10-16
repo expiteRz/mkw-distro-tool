@@ -4,6 +4,8 @@ use crate::{apps::tracks::{Track, Cup}, Distro};
 
 use super::parser::decode_image;
 
+const IMAGE_FORMAT: &'static [&'static str] = &["png", "jpg", "jpeg", "gif", "bmp"];
+
 impl Distro {
     pub fn save_project(&self, path: &PathBuf) -> Result<(), std::io::Error> {
         let mut f = File::create(path).unwrap();
@@ -22,7 +24,7 @@ impl Distro {
 
 impl Cup {
     pub fn open_image(&mut self) {
-        match rfd::FileDialog::new().add_filter("*.png", &["png"]).pick_file() {
+        match rfd::FileDialog::new().add_filter("Image file", IMAGE_FORMAT).pick_file() {
             Some(path) => { 
                 match decode_image(path.clone()) {
                     Ok(v) => {

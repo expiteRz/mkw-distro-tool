@@ -6,8 +6,16 @@ use egui_extras::{RetainedImage, Size, TableBuilder};
 use super::{ElementView, MainView, TrackDefApp};
 
 pub struct TrackDefinition {
+    pub mode: CupSettings,
     pub selected: usize,
     pub cups: Vec<Cup>,
+}
+
+pub struct CupSettings {
+    // They could be an enum?
+    pub nintendo: bool,
+    pub nin_swap: bool,
+    pub wiimm_cup: bool,
 }
 
 pub struct Cup {
@@ -32,7 +40,7 @@ impl Default for Icon {
 }
 
 pub struct Track {
-    pub id: u16,
+    pub id: usize,
     pub name: String,
     pub author: String,
     pub property: Id,
@@ -85,28 +93,43 @@ impl MainView for TrackDefApp {
             .resizable(false)
             .show(ctx, |ui| {
                 ui.heading("Cup Listing");
-                ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-                    if ui
-                        .button("Delete")
-                        .on_hover_text("Delete the selected cup")
-                        .clicked()
-                    {
-                        println!("Cup:Delete");
-                        if self.editor.cups.len() <= 1 {
-                            return;
+                ui.horizontal(|ui| {
+                    egui::ComboBox::from_id_source("cup_special_settings")
+                        .selected_text("Cup Setup")
+                        .show_ui(ui, |ui| {
+                            ui.toggle_value(&mut self.editor.mode.nintendo, "Nintendo Cups")
+                                .on_hover_text("Add Nintendo track cups");
+                            ui.add_enabled_ui(self.editor.mode.nintendo, |ui| {
+                                ui.toggle_value(&mut self.editor.mode.nin_swap, "Swap Nintendo Cups")
+                                    .on_hover_text("When the Nintendo cups added, swap them.");
+                            });
+                            ui.toggle_value(&mut self.editor.mode.wiimm_cup, "Wiimm Cup")
+                                .on_hover_text("Allow to add the randomize cup");
+                        });
+                    ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
+                        if ui
+                            .button("Delete")
+                            .on_hover_text("Delete the selected cup")
+                            .clicked()
+                        {
+                            println!("Cup:Delete");
+                            if self.editor.cups.len() <= 1 {
+                                return;
+                            }
+                            let selected = self.editor.selected;
+                            self.editor.selected = if selected < 1 {
+                                self.editor.selected
+                            } else {
+                                self.editor.selected - 1
+                            };
+                            self.editor.cups.remove(selected);
                         }
-                        let selected = self.editor.selected;
-                        self.editor.selected = if selected < 1 {
-                            self.editor.selected
-                        } else {
-                            self.editor.selected - 1
-                        };
-                        self.editor.cups.remove(selected);
-                    }
-                    if ui.button("Add").on_hover_text("Add a new cup").clicked() {
-                        self.editor.cups.push(Cup::default());
-                    }
+                        if ui.button("Add").on_hover_text("Add a new cup").clicked() {
+                            self.editor.cups.push(Cup::default(self.editor.cups.len()));
+                        }
+                    });
                 });
+                ui.separator();
                 self.editor.gen_tables(ui);
             });
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -120,34 +143,39 @@ impl Default for TrackDefinition {
     fn default() -> Self {
         Self {
             selected: 0,
-            cups: vec![Cup::default()],
+            cups: vec![Cup::default(0)],
+            mode: CupSettings {
+                nintendo: true,
+                nin_swap: true,
+                wiimm_cup: true,
+            },
         }
     }
 }
 
-impl Default for Cup {
-    fn default() -> Self {
+impl Cup {
+    fn default(n: usize) -> Self {
         Self {
             icon: Default::default(),
             trackset: vec![
                 Track {
-                    id: 0,
+                    id: (n * 4),
                     ..Default::default()
                 },
                 Track {
-                    id: 1,
+                    id: (n * 4) + 1,
                     ..Default::default()
                 },
                 Track {
-                    id: 2,
+                    id: (n * 4) + 2,
                     ..Default::default()
                 },
                 Track {
-                    id: 3,
+                    id: (n * 4) + 3,
                     ..Default::default()
                 },
             ],
-            name: "Cup".to_string(),
+            name: format!("Cup {}", n),
         }
     }
 }
@@ -160,7 +188,7 @@ impl ElementView for Cup {
                 egui::ColorImage::from_rgba_unmultiplied([1; 2], &[0, 0, 0, 0]),
             )
         } else {
-            RetainedImage::from_image_bytes("CUPA.png", &self.icon.image).unwrap()
+            RetainedImage::from_image_bytes(&self.icon.filename, &self.icon.image).unwrap()
         };
 
         ui.group(|ui| {
@@ -215,21 +243,6 @@ impl ElementView for Track {
     fn view(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.filename)
-                            .hint_text("Path to track file (*.szs)")
-                            .desired_width(400.0),
-                    );
-                    if ui
-                        .button("...")
-                        .on_hover_text("Select a SZS file")
-                        .clicked()
-                    {
-                        self.open_file();
-                    }
-                });
-                ui.separator();
                 ui.add(egui::TextEdit::singleline(&mut self.name).hint_text("Track name"));
                 ui.add(egui::TextEdit::singleline(&mut self.author).hint_text("Author name"));
                 ui.with_layout(Layout::left_to_right(egui::Align::Min), |ui| {
@@ -252,6 +265,21 @@ impl ElementView for Track {
                                 ui.selectable_value(&mut self.music, v, v.as_str());
                             }
                         });
+                });
+                ui.separator();
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.filename)
+                            .hint_text("Path to track file (*.szs)")
+                            .desired_width(400.0),
+                    );
+                    if ui
+                        .button("...")
+                        .on_hover_text("Select a SZS file")
+                        .clicked()
+                    {
+                        self.open_file();
+                    }
                 });
             });
         });
