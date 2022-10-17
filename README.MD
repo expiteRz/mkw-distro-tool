@@ -2,6 +2,8 @@
 
 The tool is to make a **distribution** (also called **CT Pack**) for Mario Kart Wii
 
+Currently [Wiimms SZS Tools](https://wiki.tockdom.com/wiki/Wiimms_SZS_Tools) is needed for the tool working.
+
 The goal is finally to make it easy-to-use to create distributions but without any external tools like [Wiimms SZS Tools](https://wiki.tockdom.com/wiki/Wiimms_SZS_Tools)
 
 ## Credits
