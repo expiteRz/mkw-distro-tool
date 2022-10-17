@@ -19,6 +19,7 @@ impl Distro {
         self.path = d.path;
         self.codes = d.codes;
         self.settings = d.settings;
+        self.tracks = d.tracks;
     }
 }
 

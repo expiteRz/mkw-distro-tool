@@ -1,17 +1,17 @@
-use std::{
-    fs::{self},
-    io::Cursor,
-    path::PathBuf,
-    str, vec,
-};
+use std::{fs, io::Cursor, path::PathBuf, str, vec};
 
 use crate::{
-    apps::{CheatCodeApp, EngineProbSet, SettingApp, SpeedometerMode},
+    apps::{
+        tracks::{CupSettings, TrackDefinition},
+        CheatCodeApp, EngineProbSet, SettingApp, SpeedometerMode, TrackDefApp,
+    },
     Distro,
 };
 
 const MAGIC: &'static str = "ZRP0DIB1";
-const FILE_BUILD_NUMBER: &'static [u8; 2] = &[0, 2]; // Later should be moved to other source code
+// Later should be moved to other source code
+// Increment per push
+const FILE_BUILD_NUMBER: &'static [u8; 2] = &[0, 3];
 
 impl Distro {
     pub fn encode(&self) -> Vec<u8> {
@@ -22,8 +22,9 @@ impl Distro {
 
         let mut setting = encode_settings(&self.settings);
         let (mut cheat_enabled, _) = encode_cheats(&self.codes);
+        let mut cup = encode_cups(&self.tracks.editor);
 
-        initial_size += setting.len() as u32;
+        initial_size += (setting.len() + cup.len()) as u32;
 
         m.append(&mut magic);
         m.append(&mut initial_size.to_be_bytes().to_vec());
@@ -32,6 +33,7 @@ impl Distro {
         });
         m.append(&mut cheat_enabled);
         m.append(&mut setting);
+        m.append(&mut cup);
 
         m
     }
@@ -43,16 +45,29 @@ impl Distro {
         }
 
         let readable_size = as_u32_be(&file[8..12]) as usize;
-        let mut loc = &file[14..readable_size];
+        let mut loc_settings = &file[14..readable_size];
+        let mut loc_cup = &file[48..];
 
-        let cheat_enabled = loc.take(..2).unwrap()[1] != 0;
+        let cheat_enabled = loc_settings.take(..2).unwrap()[1] != 0;
+
+        let cup_flag = loc_cup.take(..1).unwrap()[0];
 
         let distro = Self {
             path: Some(path.to_path_buf()),
-            settings: decode_settings(loc),
+            settings: decode_settings(loc_settings),
             codes: CheatCodeApp {
                 enabled: cheat_enabled,
                 ..Default::default()
+            },
+            tracks: TrackDefApp {
+                editor: TrackDefinition {
+                    mode: CupSettings {
+                        nintendo: (0b001u8 & cup_flag) != 0,
+                        nin_swap: (0b010u8 & cup_flag) != 0,
+                        wiimm_cup: (0b100u8 & cup_flag) != 0,
+                    },
+                    ..Default::default()
+                },
             },
             ..Default::default()
         };
@@ -89,6 +104,83 @@ pub fn encode_settings(s: &SettingApp) -> Vec<u8> {
     // Cloud
     for ele in s.time_cloud.to_be_bytes() {
         pl.push(ele);
+    }
+
+    let unfilled = 16 - (pl.len() % 16);
+    pl.append(&mut zeros(unfilled));
+
+    pl
+}
+
+pub fn encode_cups(c: &TrackDefinition) -> Vec<u8> {
+    let mut pl: Vec<u8> = vec![];
+
+    // Cup Settings
+    pl.push((c.mode.nintendo as u8) + ((c.mode.nin_swap as u8) << 1) + ((c.mode.wiimm_cup as u8) << 2));
+    pl.append(&mut zeros(1));
+    // Cup Length
+    pl.append(&mut (c.cups.len() as u16).to_be_bytes().to_vec());
+
+    let unfilled = 16 - (pl.len() % 16);
+    pl.append(&mut zeros(unfilled));
+
+    // Cup Sets
+    for cup in &c.cups {
+        let mut cl: Vec<u8> = vec![];
+        
+        // Cup name
+        let mut cup_name: Vec<u8> = (cup.name.len() as u8).to_be_bytes().to_vec();
+        cup_name.append(&mut cup.name.clone().into_bytes());
+        cup_name.append(&mut zeros(8 - (cup_name.len() % 8)));
+        cl.append(&mut cup_name);
+
+        // Icon binary
+        let mut icon_bin: Vec<u8> = cup.icon.image.len().to_be_bytes().to_vec();
+        icon_bin.append(&mut cup.icon.image.to_vec());
+        icon_bin.append(&mut zeros(8 - (icon_bin.len() % 8)));
+        cl.append(&mut icon_bin);
+        // Icon filename
+        let mut icon_filename: Vec<u8> = (cup.icon.filename.len() as u8).to_be_bytes().to_vec();
+        icon_filename.append(&mut cup.icon.filename.clone().into_bytes());
+        icon_filename.append(&mut zeros(8 - (icon_filename.len() % 8)));
+        cl.append(&mut icon_filename);
+
+        // Tracks
+        for track in &cup.trackset {
+            // Unused ID
+            let mut id: Vec<u8> = track.id.to_be_bytes().to_vec();
+            cl.append(&mut id);
+
+            // Name
+            let mut name: Vec<u8> = (track.name.len() as u8).to_be_bytes().to_vec();
+            name.append(&mut track.name.clone().into_bytes());
+            name.append(&mut zeros(8 - (name.len() % 8)));
+            cl.append(&mut name);
+
+            // Author
+            let mut author: Vec<u8> = (track.author.len() as u8).to_be_bytes().to_vec();
+            author.append(&mut track.author.clone().into_bytes());
+            author.append(&mut zeros(8 - (author.len() % 8)));
+            cl.append(&mut author);
+
+            // Special IDs
+            cl.push(track.property as u8);
+            cl.push(track.music as u8);
+
+            // New track flag
+            cl.push(track.new as u8);
+
+            // Group flag
+            cl.push(track.flag as u8);
+
+            // Filename
+            let mut filename: Vec<u8> = (track.filename.len() as u8).to_be_bytes().to_vec();
+            filename.append(&mut track.filename.clone().into_bytes());
+            filename.append(&mut zeros(8 - (filename.len() % 8)));
+            cl.append(&mut filename);
+        }
+
+        pl.append(&mut cl);
     }
 
     let unfilled = 16 - (pl.len() % 16);

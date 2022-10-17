@@ -26,11 +26,8 @@ impl MainView for SettingApp {
             .resizable(false)
             .show(ctx, |ui| {
                 ui.heading("LPAR Settings");
-                ui.add_enabled(
-                    false,
-                    SelectableLabel::new(self.toggle_200cc == true, "200cc"),
-                )
-                .on_disabled_hover_text("200cc is not implemented yet.");
+                ui.add_enabled(false, SelectableLabel::new(self.toggle_200cc == true, "200cc"))
+                    .on_disabled_hover_text("200cc is not implemented yet.");
                 ui.horizontal(|ui| {
                     ui.label("Engine Probabilities");
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -40,21 +37,12 @@ impl MainView for SettingApp {
                     })
                 });
                 ui.vertical(|ui| {
-                    ui.add(Slider::new(&mut self.engine_probs.low, (0)..=(100)).text(engine_label(false, EngineProbMode::Low)))
-                        .on_hover_text(format!(
-                            "Probability for {} online",
-                            engine_label(false, EngineProbMode::Low)
-                        ));
-                    ui.add(Slider::new(&mut self.engine_probs.mid, (0)..=(100)).text(engine_label(false, EngineProbMode::Mid)))
-                        .on_hover_text(format!(
-                            "Probability for {} online",
-                            engine_label(false, EngineProbMode::Mid)
-                        ));
-                    ui.add(Slider::new(&mut self.engine_probs.high, (0)..=(100)).text(engine_label(false, EngineProbMode::High)))
-                        .on_hover_text(format!(
-                            "Probability for {} online",
-                            engine_label(false, EngineProbMode::High)
-                        ));
+                    ui.add(Slider::new(&mut self.engine_probs.low, 0..=100).text(engine_label(false, EngineProbMode::Low)))
+                        .on_hover_text(format!("Probability for {} online", engine_label(false, EngineProbMode::Low)));
+                    ui.add(Slider::new(&mut self.engine_probs.mid, 0..=100).text(engine_label(false, EngineProbMode::Mid)))
+                        .on_hover_text(format!("Probability for {} online", engine_label(false, EngineProbMode::Mid)));
+                    ui.add(Slider::new(&mut self.engine_probs.high, 0..=100).text(engine_label(false, EngineProbMode::High)))
+                        .on_hover_text(format!("Probability for {} online", engine_label(false, EngineProbMode::High)));
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
@@ -104,18 +92,10 @@ impl MainView for SettingApp {
                 ui.label("Thundercloud Shrink Time")
                     .on_hover_text("Time in frames a player is small after being struck by a thundercloud");
                 ui.horizontal(|ui| {
-                    ui.selectable_value(
-                        &mut self.time_cloud,
-                        CloudShrinkTime::Nintendo as i16,
-                        "Nintendo",
-                    )
-                    .on_hover_text("Set a default value of original game");
-                    ui.selectable_value(
-                        &mut self.time_cloud,
-                        CloudShrinkTime::LECODE as i16,
-                        "LE-CODE",
-                    )
-                    .on_hover_text("Set a default value of LE-CODE");
+                    ui.selectable_value(&mut self.time_cloud, CloudShrinkTime::Nintendo as i16, "Nintendo")
+                        .on_hover_text("Set a default value of original game");
+                    ui.selectable_value(&mut self.time_cloud, CloudShrinkTime::LECODE as i16, "LE-CODE")
+                        .on_hover_text("Set a default value of LE-CODE");
                     ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
                         ui.add(egui::DragValue::new(&mut self.time_cloud).clamp_range(1..=32767))
                     })

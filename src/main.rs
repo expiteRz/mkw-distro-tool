@@ -16,8 +16,7 @@ const APP_VERSION: &'static str = "v0.1.0";
 
 #[cfg(debug_assertions)]
 fn sprint_version() -> String {
-    let version = String::from(APP_VERSION);
-    format!("{}-DEBUG", version)
+    format!("{}-DEBUG", APP_VERSION)
 }
 
 #[cfg(not(debug_assertions))]
@@ -70,40 +69,9 @@ impl App for Distro {
         self.codes.ui(ctx);
         self.tracks.ui(ctx);
 
-        // Temporarily set panel
-        // Later replacing track listing app
-        // egui::CentralPanel::default().show(ctx, |ui| {
-        //     ui.heading("Track Listing");
-        //     ui.horizontal(|ui| {
-        //         ui.group(|ui| {
-        //             ui.vertical(|ui| {
-        //                 ui.text_edit_singleline(&mut "Cup name");
-        //                 ui.horizontal(|ui| {
-        //                     ui.group(|ui| {
-        //                         let texture = RetainedImage::from_image_bytes("CUPA.png", include_bytes!("../res/CUPA.png")).unwrap();
-        //                         if ui
-        //                             .add_sized([64.0, 64.0], egui::ImageButton::new(texture.texture_id(ctx), [64.0, 64.0]))
-        //                             .clicked()
-        //                         {
-        //                             rfd::FileDialog::new()
-        //                                 .add_filter("Image file", &["png", "gif", "jpg", "jpeg", "bmp", "svg"])
-        //                                 .pick_file();
-        //                         }
-        //                     });
-        //                     ScrollArea::horizontal().auto_shrink([false; 2]).show(ui, |ui| {
-        //                         ui.vertical(|ui| {
-        //                             apps::tracks::test_view(ui);
-        //                         })
-        //                     });
-        //                 });
-        //             });
-        //         });
-        //     });
-
         if self.close_confirm_dialog {
             self.close_confirm(ctx, _frame);
         }
-        // });
     }
 
     fn on_close_event(&mut self) -> bool {
@@ -190,6 +158,7 @@ impl Distro {
                 ui.menu_button("File", |ui| {
                     if ui.button("New Project").clicked() {
                         self.settings = Default::default();
+                        self.tracks = Default::default();
                     }
                     if ui.button("Open Project").clicked() {
                         if let Some(path) = rfd::FileDialog::new()

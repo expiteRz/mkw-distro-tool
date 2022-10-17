@@ -1,6 +1,6 @@
 use std::vec;
 
-use egui::{Align, Layout, TextureId, Ui};
+use egui::{Align, Layout};
 use egui_extras::{RetainedImage, Size, TableBuilder};
 
 use super::{ElementView, MainView, TrackDefApp};
@@ -25,6 +25,7 @@ pub struct Cup {
     pub trackset: Vec<Track>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Icon {
     pub filename: String,
     pub image: Vec<u8>,
@@ -40,11 +41,13 @@ impl Default for Icon {
 }
 
 pub struct Track {
+    // Doesn't affect to LE-BIN
     pub id: usize,
     pub name: String,
     pub author: String,
     pub property: Id,
     pub music: Id,
+    pub new: bool,
     pub flag: GroupFlag,
     pub filename: String,
 }
@@ -67,10 +70,7 @@ impl TrackDefinition {
                 body.row(17.0, |mut row| {
                     row.col(|ui| {
                         if ui
-                            .add_sized(
-                                ui.available_size(),
-                                egui::SelectableLabel::new(i == self.selected, &x.name),
-                            )
+                            .add_sized(ui.available_size(), egui::SelectableLabel::new(i == self.selected, &x.name))
                             .clicked()
                         {
                             self.selected = i;
@@ -98,10 +98,10 @@ impl MainView for TrackDefApp {
                         .selected_text("Cup Setup")
                         .show_ui(ui, |ui| {
                             ui.toggle_value(&mut self.editor.mode.nintendo, "Nintendo Cups")
-                                .on_hover_text("Add Nintendo track cups");
+                                .on_hover_text("Allow to add Nintendo track cups");
                             ui.add_enabled_ui(self.editor.mode.nintendo, |ui| {
                                 ui.toggle_value(&mut self.editor.mode.nin_swap, "Swap Nintendo Cups")
-                                    .on_hover_text("When the Nintendo cups added, swap them.");
+                                    .on_hover_text("When the Nintendo cups added, reorder the cups to look the same as vanilla.");
                             });
                             ui.toggle_value(&mut self.editor.mode.wiimm_cup, "Wiimm Cup")
                                 .on_hover_text("Allow to add the randomize cup");
@@ -183,10 +183,7 @@ impl Cup {
 impl ElementView for Cup {
     fn view(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         let texture = if self.icon.filename.is_empty() && self.icon.image.is_empty() {
-            RetainedImage::from_color_image(
-                "None.png",
-                egui::ColorImage::from_rgba_unmultiplied([1; 2], &[0, 0, 0, 0]),
-            )
+            RetainedImage::from_color_image("None.png", egui::ColorImage::from_rgba_unmultiplied([1; 2], &[0, 0, 0, 0]))
         } else {
             RetainedImage::from_image_bytes(&self.icon.filename, &self.icon.image).unwrap()
         };
@@ -194,10 +191,7 @@ impl ElementView for Cup {
         ui.group(|ui| {
             ui.horizontal(|ui| {
                 if ui
-                    .add(egui::ImageButton::new(
-                        texture.texture_id(ctx),
-                        [64.0, 64.0],
-                    ))
+                    .add(egui::ImageButton::new(texture.texture_id(ctx), [78.0, 78.0]))
                     .on_hover_text("Select a image to set as cup icon")
                     .context_menu(|ui| {
                         if ui.button("Select a image").clicked() {
@@ -235,6 +229,7 @@ impl Default for Track {
             flag: GroupFlag::None,
             filename: "".to_string(),
             author: "".to_string(),
+            new: false,
         }
     }
 }
@@ -243,7 +238,10 @@ impl ElementView for Track {
     fn view(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.vertical(|ui| {
-                ui.add(egui::TextEdit::singleline(&mut self.name).hint_text("Track name"));
+                ui.horizontal(|ui| {
+                    ui.add(egui::TextEdit::singleline(&mut self.name).hint_text("Track name"));
+                    ui.checkbox(&mut self.new, "New").on_hover_text(format!("Mark as new track\nIt will include in the option {} in Wiimm Cup", r#""Random: New Track""#));
+                });
                 ui.add(egui::TextEdit::singleline(&mut self.author).hint_text("Author name"));
                 ui.with_layout(Layout::left_to_right(egui::Align::Min), |ui| {
                     egui::ComboBox::new(format!("property_{}", &mut self.id), "Property")
@@ -427,106 +425,6 @@ impl Id {
             Id::CookieLandGCN => "GCN Cookie Land",
             Id::TwilightHouseDS => "DS Twilight House",
             Id::GalaxyArena => "Galaxy Colosseum",
-        }
-    }
-}
-
-/// Test widget definition for layouting
-#[deprecated(note = "This function is defined for testing layout")]
-pub fn test_view(ui: &mut egui::Ui) {
-    let test_track_layout = |ui: &mut egui::Ui, id: usize| {
-        ui.horizontal(|ui| {
-            ui.button("+").on_hover_text("Add child track");
-            ui.add(
-                egui::TextEdit::singleline(&mut "Track name")
-                    .desired_width(150.0)
-                    .hint_text("Track name"),
-            );
-            ui.separator();
-            egui::ComboBox::new(format!("property_{}", id), "Property")
-                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-                .width(130.0)
-                .show_ui(ui, |ui| {
-                    for x in Id::VALUES {
-                        ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
-                    }
-                });
-            ui.separator();
-            egui::ComboBox::new(format!("music_{}", id), "Music")
-                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-                .width(150.0)
-                .show_ui(ui, |ui| {
-                    for x in 0..(Id::VALUES.len() - 1) {
-                        ui.selectable_value(
-                            &mut &Id::LuigiCircuit,
-                            &Id::VALUES[x],
-                            format!("{}", Id::VALUES[x].as_str()),
-                        );
-                    }
-                });
-            ui.separator();
-            ui.add(
-                egui::TextEdit::singleline(&mut "path to track file")
-                    .desired_width(300.0)
-                    .hint_text("Path to track file"),
-            );
-            ui.button("...");
-        });
-    };
-
-    let child_track_layout = |ui: &mut egui::Ui, id: usize| {
-        ui.horizontal(|ui| {
-            ui.add_space(8.0);
-            ui.group(|ui| {
-                ui.vertical(|ui| {
-                    for xc in 0..2 {
-                        ui.horizontal(|ui| {
-                            ui.button("-");
-                            ui.add(
-                                egui::TextEdit::singleline(&mut "Track name")
-                                    .desired_width(150.0)
-                                    .hint_text("Track name"),
-                            );
-                            ui.separator();
-                            egui::ComboBox::new(format!("property_child_{}", xc), "Property")
-                                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-                                .width(130.0)
-                                .show_ui(ui, |ui| {
-                                    for x in Id::VALUES {
-                                        ui.selectable_value(&mut &Id::LuigiCircuit, &x, format!("{}", x.as_str()));
-                                    }
-                                });
-                            ui.separator();
-                            egui::ComboBox::new(format!("music_{}", xc), "Music")
-                                .selected_text(format!("{}", Id::LuigiCircuit.as_str()))
-                                .width(150.0)
-                                .show_ui(ui, |ui| {
-                                    for x in 0..(Id::VALUES.len() - 1) {
-                                        ui.selectable_value(
-                                            &mut &Id::LuigiCircuit,
-                                            &Id::VALUES[x],
-                                            format!("{}", Id::VALUES[x].as_str()),
-                                        );
-                                    }
-                                });
-                            ui.separator();
-                            ui.add(
-                                egui::TextEdit::singleline(&mut "path to track file")
-                                    .desired_width(300.0)
-                                    .hint_text("Path to track file"),
-                            );
-                            ui.button("...");
-                        });
-                    }
-                })
-            });
-        })
-    };
-
-    for x in 0..4 {
-        test_track_layout(ui, x);
-        if x == 2 {
-            child_track_layout(ui, x);
         }
     }
 }

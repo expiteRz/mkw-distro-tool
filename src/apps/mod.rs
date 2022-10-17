@@ -19,13 +19,6 @@ pub struct TrackDefApp {
     pub editor: TrackDefinition,
 }
 
-#[derive(Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(default))]
-pub struct State {
-    track: TrackDefApp,
-}
-
 #[derive(PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
