@@ -5,10 +5,14 @@ on:
     branches: [ master ]
     paths-ignore:
     - '**.md'
+    - '.gitignore'
+    - 'cargo.toml'
   pull_request:
     branches: [ master ]
     paths-ignore:
     - '**.md'
+    - '.gitignore'
+    - 'cargo.toml'
 
 env:
   CARGO_TERM_COLOR: always
