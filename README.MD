@@ -4,6 +4,8 @@ The tool is to make a **distribution** (also called **CT Pack**) for Mario Kart 
 
 Currently [Wiimms SZS Tools](https://wiki.tockdom.com/wiki/Wiimms_SZS_Tools) is needed for the tool working.
 
+To create a distribution included Nintendo tracks, you need to extract your Mario Kart Wii ISO/WBFS in root directory of the application.
+
 The goal is finally to make it easy-to-use to create distributions but without any external tools like [Wiimms SZS Tools](https://wiki.tockdom.com/wiki/Wiimms_SZS_Tools)
 
 ## Credits

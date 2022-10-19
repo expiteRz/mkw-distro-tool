@@ -1,4 +1,4 @@
-use std::vec;
+use std::{vec, sync::Arc, ops::DerefMut};
 
 use egui::{Align, Layout};
 use egui_extras::{RetainedImage, Size, TableBuilder};
@@ -18,6 +18,7 @@ pub struct CupSettings {
     pub wiimm_cup: bool,
 }
 
+#[derive(Debug, Clone)]
 pub struct Cup {
     /// path to image
     pub icon: Icon,
@@ -40,6 +41,7 @@ impl Default for Icon {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Track {
     // Doesn't affect to LE-BIN
     pub id: usize,
@@ -52,6 +54,7 @@ pub struct Track {
     pub filename: String,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum GroupFlag {
     None,
     Header,

@@ -25,6 +25,8 @@ fn sprint_version() -> String {
 }
 
 fn main() {
+    let track_bytes: &[u8] = include_bytes!("../res/tracks.bin") as &[u8];
+
     let options = eframe::NativeOptions {
         initial_window_size: Some([1280.0, 640.0].into()),
         min_window_size: Some([1280.0, 640.0].into()),

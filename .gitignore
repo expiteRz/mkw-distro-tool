@@ -1,9 +1,16 @@
-/.idea
-/.vscode
-/target
+.idea/
+.vscode/
+target/
 Cargo.lock
 *.bin
 rustfmt.toml
 
 /// Custom Project File (^_^)b
 *.mkprj
+
+/// Golang related
+go.sum
+
+/// Tracks
+*.szs
+*.d/
