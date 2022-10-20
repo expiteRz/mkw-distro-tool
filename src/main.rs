@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(slice_take)]
+#![feature(string_remove_matches)]
 
 mod apps;
 mod helpers;

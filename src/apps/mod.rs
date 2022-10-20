@@ -82,15 +82,15 @@ pub struct CheatCodeApp {
     pub vertical_scroll_offset: Option<f32>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 pub struct CodeStruct {
-    name: String,
-    code_ntsc: String,
-    code_pal: String,
-    code_jp: String,
-    code_kor: String,
+    pub name: String,
+    pub code_ntsc: String,
+    pub code_pal: String,
+    pub code_jp: String,
+    pub code_kor: String,
 }
 
 impl Default for CodeStruct {

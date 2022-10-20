@@ -21,7 +21,7 @@ impl Distro {
         let mut magic = MAGIC.as_bytes().to_vec();
 
         let mut setting = encode_settings(&self.settings);
-        let (mut cheat_enabled, _) = encode_cheats(&self.codes);
+        let mut cheat_enabled = encode_cheats(&self.codes);
         let mut cup = encode_cups(&self.tracks.editor);
 
         initial_size += (setting.len() + cup.len()) as u32;
@@ -31,9 +31,9 @@ impl Distro {
         FILE_BUILD_NUMBER.map(|v| {
             m.push(v);
         });
-        m.append(&mut cheat_enabled);
         m.append(&mut setting);
         m.append(&mut cup);
+        m.append(&mut cheat_enabled);
 
         m
     }
@@ -127,7 +127,7 @@ pub fn encode_cups(c: &TrackDefinition) -> Vec<u8> {
     // Cup Sets
     for cup in &c.cups {
         let mut cl: Vec<u8> = vec![];
-        
+
         // Cup name
         let mut cup_name: Vec<u8> = (cup.name.len() as u8).to_be_bytes().to_vec();
         cup_name.append(&mut cup.name.clone().into_bytes());
@@ -189,10 +189,56 @@ pub fn encode_cups(c: &TrackDefinition) -> Vec<u8> {
     pl
 }
 
-pub fn encode_cheats(c: &CheatCodeApp) -> (Vec<u8>, Vec<u8>) {
-    let b = c.enabled() as u16;
+pub fn encode_cheats(c: &CheatCodeApp) -> Vec<u8> {
+    let b = c.enabled() as u8;
+    let mut pl: Vec<u8> = zeros(8);
 
-    (b.to_be_bytes().to_vec(), vec![])
+    pl[0] = b;
+
+    let codes = c.codes.as_ref();
+    for code in codes {
+        pl.append(&mut (code.name.len() as u16).to_be_bytes().to_vec());
+        pl.append(&mut code.clone().name.into_bytes());
+        pl.append(&mut zeros(8 - (pl.len() % 8)));
+
+        let mut code_ntsc = code.clone().code_ntsc;
+        code_ntsc.remove_matches(" ");
+        code_ntsc.remove_matches("\n");
+        pl.append(&mut (code_ntsc.len() as u32).to_be_bytes().to_vec());
+        pl.append(&mut code_ntsc.into_bytes());
+        pl.append(&mut zeros(8 - (pl.len() % 8)));
+
+        let mut code_pal = code.clone().code_pal;
+        code_pal.remove_matches(" ");
+        code_pal.remove_matches("\n");
+        pl.append(&mut (code_pal.len() as u32).to_be_bytes().to_vec());
+        pl.append(&mut code_pal.into_bytes());
+        pl.append(&mut zeros(8 - (pl.len() % 8)));
+
+        let mut code_jp = code.clone().code_jp;
+        code_jp.remove_matches(" ");
+        code_jp.remove_matches("\n");
+        pl.append(&mut (code_jp.len() as u32).to_be_bytes().to_vec());
+        pl.append(&mut code_jp.into_bytes());
+        pl.append(&mut zeros(8 - (pl.len() % 8)));
+
+        let mut code_kor = code.clone().code_kor;
+        code_kor.remove_matches(" ");
+        code_kor.remove_matches("\n");
+        pl.append(&mut (code_kor.len() as u32).to_be_bytes().to_vec());
+        pl.append(&mut code_kor.into_bytes());
+        pl.append(&mut zeros(8 - (pl.len() % 8)));
+    }
+
+    pl.append(&mut zeros(16 - (pl.len() % 16)));
+
+    let len = (pl.len() as u32).to_be_bytes();
+
+    for (l, v) in len.iter().enumerate() {
+        pl[4 + l] = *v;
+    }
+
+    pl
 }
 
 fn decode_settings(a: &[u8]) -> SettingApp {
