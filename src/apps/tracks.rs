@@ -430,4 +430,53 @@ impl Id {
             Id::GalaxyArena => "Galaxy Colosseum",
         }
     }
+
+    /// Plan to use for finally building distribution
+    pub fn _as_id(&self) -> (u8, u8) {
+        match self {
+            Id::LuigiCircuit => (0x75, 0x08),
+            Id::MooMooMeadow => (0x77, 0x01),
+            Id::MushroomGorge => (0x79, 0x02),
+            Id::ToadsFactory => (0x7b, 0x04),
+            Id::MarioCircuit => (0x7d, 0x00),
+            Id::CoconutMall => (0x7f, 0x05),
+            Id::DKSummit => (0x81, 0x06),
+            Id::WariosGoldMine => (0x83, 0x07),
+            Id::DaisyCircuit => (0x87, 0x09),
+            Id::KoopaCape => (0x89, 0x0f),
+            Id::MapleTreeway => (0x8b, 0x0b),
+            Id::GrumbleVolcano => (0x8d, 0x03),
+            Id::DryDryRuins => (0x8f, 0x0e),
+            Id::MoonviewHighway => (0x91, 0x0a),
+            Id::BowsersCastle => (0x93, 0x0c),
+            Id::RainbowRoad => (0x95, 0x0d),
+            Id::PeachBeachGCN => (0xa5, 0x10),
+            Id::YoshiFallsDS => (0xad, 0x14),
+            Id::GhostValleySNES => (0x97, 0x19),
+            Id::MarioRacewayN64 => (0x9f, 0x1a),
+            Id::SherbetLandN64 => (0x9d, 0x1b),
+            Id::ShyGuyBeachGBA => (0x95, 0x1f),
+            Id::DelfinoSquareDS => (0xaf, 0x17),
+            Id::WaluigiStadiumGCN => (0xa9, 0x12),
+            Id::DesertHillsDS => (0xb1, 0x15),
+            Id::BowserCastleGBA => (0x9b, 0x1e),
+            Id::JungleParkwayN64 => (0xa1, 0x1d),
+            Id::MarioCircuitGCN => (0xa7, 0x11),
+            Id::MarioCircuitSNES => (0x99, 0x18),
+            Id::PeachGardenDS => (0xb3, 0x16),
+            Id::DKMountainGCN => (0xab, 0x13),
+            Id::BowserCastleN64 => (0xa3, 0x1c),
+            Id::BlockPlaza => (0xb7, 0x21),
+            Id::DelfinoPier => (0xb5, 0x20),
+            Id::FunkyStadium => (0xb9, 0x23),
+            Id::ChompWheel => (0xbb, 0x22),
+            Id::ThwompDesert => (0xbd, 0x24),
+            Id::BattleCourseSNES => (0xc3, 0x27),
+            Id::BattleCourseGBA => (0xc5, 0x28),
+            Id::SkyscraperN64 => (0xc7, 0x29),
+            Id::CookieLandGCN => (0xbf, 0x25),
+            Id::TwilightHouseDS => (0xc1, 0x26),
+            Id::GalaxyArena => (0xc9, 0x36),
+        }
+    }
 }

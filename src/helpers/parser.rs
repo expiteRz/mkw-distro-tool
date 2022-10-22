@@ -11,7 +11,7 @@ use crate::{
 const MAGIC: &'static str = "ZRP0DIB1";
 // Later should be moved to other source code
 // Increment per push
-const FILE_BUILD_NUMBER: &'static [u8; 2] = &[0, 3];
+const FILE_BUILD_NUMBER: &'static [u8; 2] = &[0, 4];
 
 impl Distro {
     pub fn encode(&self) -> Vec<u8> {
@@ -21,27 +21,26 @@ impl Distro {
         let mut magic = MAGIC.as_bytes().to_vec();
 
         let mut setting = encode_settings(&self.settings);
-        let mut cheat_enabled = encode_cheats(&self.codes);
+        let mut cheats = encode_cheats(&self.codes);
         let mut cup = encode_cups(&self.tracks.editor);
 
-        initial_size += (setting.len() + cup.len()) as u32;
+        initial_size += (setting.len() + cup.len() + cheats.1.len()) as u32;
 
         m.append(&mut magic);
-        m.append(&mut initial_size.to_be_bytes().to_vec());
-        FILE_BUILD_NUMBER.map(|v| {
-            m.push(v);
-        });
+        initial_size.to_be_bytes().map(|v| m.push(v));
+        FILE_BUILD_NUMBER.map(|v| m.push(v));
+        m.append(&mut cheats.0);
         m.append(&mut setting);
         m.append(&mut cup);
-        m.append(&mut cheat_enabled);
+        m.append(&mut cheats.1);
 
         m
     }
 
-    pub fn decode(&mut self, path: &PathBuf) -> Result<Self, ()> {
+    pub fn decode(&mut self, path: &PathBuf) -> Result<Self, &'static str> {
         let file = fs::read(path).unwrap();
         if str::from_utf8(&file[0..8]).unwrap() != MAGIC && &file[12..14] == FILE_BUILD_NUMBER.as_slice() {
-            return Err(());
+            return Err("The opened file is not a project file or failed on parsing for any reasons.");
         }
 
         let readable_size = as_u32_be(&file[8..12]) as usize;
@@ -189,11 +188,9 @@ pub fn encode_cups(c: &TrackDefinition) -> Vec<u8> {
     pl
 }
 
-pub fn encode_cheats(c: &CheatCodeApp) -> Vec<u8> {
-    let b = c.enabled() as u8;
-    let mut pl: Vec<u8> = zeros(8);
-
-    pl[0] = b;
+pub fn encode_cheats(c: &CheatCodeApp) -> (Vec<u8>, Vec<u8>) {
+    let b = c.enabled() as u16;
+    let mut pl: Vec<u8> = vec![];
 
     let codes = c.codes.as_ref();
     for code in codes {
@@ -238,7 +235,7 @@ pub fn encode_cheats(c: &CheatCodeApp) -> Vec<u8> {
         pl[4 + l] = *v;
     }
 
-    pl
+    (b.to_be_bytes().to_vec(), pl)
 }
 
 fn decode_settings(a: &[u8]) -> SettingApp {

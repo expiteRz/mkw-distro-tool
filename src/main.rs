@@ -41,6 +41,7 @@ struct Distro {
     confirm_dialog: bool,
     allow_to_close: bool,
     disallow_to_ingnore_change: bool,
+    err_msg: &'static str,
     //-- loaded file
     path: Option<PathBuf>,
     //-- Any apps
@@ -60,20 +61,25 @@ impl Default for Distro {
             path: None,
             confirm_dialog: false,
             disallow_to_ingnore_change: false,
+            err_msg: "",
         }
     }
 }
 
 impl App for Distro {
-    fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-        _frame.set_window_title(&self.gen_title());
-        self.view_top_menu(ctx, _frame);
+    fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+        frame.set_window_title(&self.gen_title());
+        self.view_top_menu(ctx, frame);
         self.settings.ui(ctx);
         self.codes.ui(ctx);
         self.tracks.ui(ctx);
 
         if self.close_confirm_dialog {
-            self.close_confirm(ctx, _frame);
+            self.close_confirm(ctx, frame);
+        }
+
+        if self.confirm_dialog {
+            self.any_confirm(ctx, frame);
         }
     }
 
@@ -122,35 +128,25 @@ impl Distro {
             });
     }
 
-    fn any_confirm(&mut self, ctx: &Context, frame: &mut Frame, message: &str) -> bool {
-        let mut consider = false;
+    fn any_confirm(&mut self, ctx: &Context, frame: &mut Frame) {
         let (x, y) = (
             frame.info().window_info.size.x,
             frame.info().window_info.size.y,
         );
-        egui::Window::new("Confirm")
+        egui::Window::new("Error")
             .title_bar(true)
             .default_width(400.0)
             .collapsible(false)
             .resizable(false)
-            .fixed_pos([(x / 2.0) - 100.0, y / 2.5])
+            .fixed_pos([(x / 2.0) - 200.0, y / 2.5])
             .show(ctx, |ui| {
-                ui.label(message);
+                ui.label(self.err_msg);
                 ui.horizontal(|ui| {
-                    if ui.button("Yes").clicked() {
+                    if ui.button("Ok").clicked() {
                         self.confirm_dialog = false;
-                        self.disallow_to_ingnore_change = true;
-                        consider = true;
-                    }
-                    if ui.button("No").clicked() {
-                        self.confirm_dialog = false;
-                        self.disallow_to_ingnore_change = false;
-                        consider = false;
                     }
                 })
             });
-
-        consider
     }
 
     fn view_top_menu(&mut self, ctx: &Context, frame: &mut Frame) {

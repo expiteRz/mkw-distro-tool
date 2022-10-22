@@ -5,6 +5,7 @@ target/
 Cargo.lock
 *.bin
 rustfmt.toml
+*.bak
 
 /// Custom Project File (^_^)b
 *.mkprj

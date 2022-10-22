@@ -1,6 +1,9 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
-use crate::{apps::tracks::{Track, Cup}, Distro};
+use crate::{
+    apps::tracks::{Cup, Track},
+    Distro,
+};
 
 use super::parser::decode_image;
 
@@ -14,28 +17,37 @@ impl Distro {
     }
 
     pub fn open_project(&mut self, path: &PathBuf) {
-        let d = self.decode(path).unwrap();
-
-        self.path = d.path;
-        self.codes = d.codes;
-        self.settings = d.settings;
-        self.tracks = d.tracks;
+        match self.decode(path) {
+            Ok(v) => {
+                self.path = v.path;
+                self.codes = v.codes;
+                self.settings = v.settings;
+                self.tracks = v.tracks;
+            }
+            Err(err) => {
+                self.err_msg = err;
+                self.confirm_dialog = true;
+            }
+        };
     }
 }
 
 impl Cup {
     pub fn open_image(&mut self) {
-        match rfd::FileDialog::new().add_filter("Image file", IMAGE_FORMAT).pick_file() {
-            Some(path) => { 
+        match rfd::FileDialog::new()
+            .add_filter("Image file", IMAGE_FORMAT)
+            .pick_file()
+        {
+            Some(path) => {
                 match decode_image(path.clone()) {
                     Ok(v) => {
                         self.icon.filename = format!("{}", path.file_name().unwrap().to_str().unwrap());
                         self.icon.image = v;
-                    },
-                    Err(_) => {},
+                    }
+                    Err(_) => {}
                 };
-             },
-            None => {},
+            }
+            None => {}
         }
     }
 }
