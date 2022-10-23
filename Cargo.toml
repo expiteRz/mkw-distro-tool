@@ -11,7 +11,7 @@ egui = { version = "0.19.0", features = ["serde"] }
 eframe = { version = "0.19.0", features = ["serde"] }
 rfd = "0.10.0"
 egui_extras = {version = "0.19.0", features=["image"]}
-image = { version = "0.24.4", default-features = false, features = ["png", "jpeg", "gif", "bmp"]}
+image = { version = "0.24.4", default-features = false, features = ["png", "jpeg", "gif", "bmp", "webp"]}
 serde = "1.0.145" 
 serde_json = "1.0.86"
 syntect = { version = "5", optional = true, default-features = false, features = ["default-fancy"] }
@@ -19,6 +19,7 @@ enum-map = { version = "2", features = ["serde"] }
 resize = "0.7.4"
 base64 = "0.13.0"
 zstd = "0.11.2"
+webp = "0.2.2"
 
 [build-dependencies]
 base64 = "0.13.0"

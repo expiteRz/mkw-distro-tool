@@ -134,9 +134,13 @@ pub fn encode_cups(c: &TrackDefinition) -> Vec<u8> {
         cl.append(&mut cup_name);
 
         // Icon binary
-        let mut icon_bin: Vec<u8> = cup.icon.image.len().to_be_bytes().to_vec();
-        icon_bin.append(&mut cup.icon.image.to_vec());
-        icon_bin.append(&mut zeros(8 - (icon_bin.len() % 8)));
+        let compiled_image = encode_image(&cup.icon.image);
+        let mut icon_bin: Vec<u8> = compiled_image.len().to_be_bytes().to_vec();
+        icon_bin.append(&mut compiled_image.clone());
+        icon_bin.append(&mut zeros(8 - (compiled_image.len() % 8)));
+        // let mut icon_bin: Vec<u8> = cup.icon.image.len().to_be_bytes().to_vec();
+        // icon_bin.append(&mut cup.icon.image.to_vec());
+        // icon_bin.append(&mut zeros(8 - (icon_bin.len() % 8)));
         cl.append(&mut icon_bin);
         // Icon filename
         let mut icon_filename: Vec<u8> = (cup.icon.filename.len() as u8).to_be_bytes().to_vec();
@@ -236,6 +240,16 @@ pub fn encode_cheats(c: &CheatCodeApp) -> (Vec<u8>, Vec<u8>) {
     }
 
     (b.to_be_bytes().to_vec(), pl)
+}
+
+// While saving a project the file size mostly could be larger, so try to convert into Webp because it's smaller
+pub fn encode_image(i: &[u8]) -> Vec<u8> {
+    let image = image::load_from_memory(i).expect("Failed to consider image");
+
+    let encoder = webp::Encoder::from_image(&image).expect("Failed to consider image for webp");
+    let encoded_webp: webp::WebPMemory = encoder.encode(65f32);
+
+    encoded_webp.to_vec()
 }
 
 fn decode_settings(a: &[u8]) -> SettingApp {
