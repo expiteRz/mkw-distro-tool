@@ -26,7 +26,7 @@ fn sprint_version() -> String {
 }
 
 fn main() {
-    let track_bytes: &[u8] = include_bytes!("../res/tracks.bin") as &[u8];
+    // let _track_bytes: &[u8] = include_bytes!("../res/tracks.bin") as &[u8];
 
     let options = eframe::NativeOptions {
         initial_window_size: Some([1280.0, 640.0].into()),
@@ -37,16 +37,25 @@ fn main() {
 }
 
 struct Distro {
+    /// To allow displaying closing confirmation
     close_confirm_dialog: bool,
+    /// To allow displaying error confirmation.
+    /// Messages are determined in Self::err_msg
     confirm_dialog: bool,
-    allow_to_close: bool,
-    disallow_to_ingnore_change: bool,
+    /// (Currently keeps in true) Check the application closable immediately.
+    /// Generally the closing confirmation dialog will display if it's true
+    disallow_to_close: bool,
+    _disallow_to_ignore_change: bool,
+    /// Error message
     err_msg: &'static str,
-    //-- loaded file
+    /// Path to loaded file
     path: Option<PathBuf>,
     //-- Any apps
+    /// Track definition
     tracks: TrackDefApp,
+    /// LE-PAR definition
     settings: SettingApp,
+    /// Cheat code definition
     codes: CheatCodeApp,
 }
 
@@ -54,13 +63,13 @@ impl Default for Distro {
     fn default() -> Self {
         Self {
             close_confirm_dialog: false,
-            allow_to_close: false,
+            disallow_to_close: false,
             tracks: Default::default(),
             settings: Default::default(),
             codes: Default::default(),
             path: None,
             confirm_dialog: false,
-            disallow_to_ingnore_change: false,
+            _disallow_to_ignore_change: false,
             err_msg: "",
         }
     }
@@ -85,7 +94,7 @@ impl App for Distro {
 
     fn on_close_event(&mut self) -> bool {
         self.close_confirm_dialog = true;
-        self.allow_to_close
+        self.disallow_to_close
     }
 }
 
