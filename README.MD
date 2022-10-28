@@ -13,3 +13,7 @@ The goal is finally to make it easy-to-use to create distributions but without a
 - [emilk](https://github.com/emilk), for GUI library [egui](https://github.com/emilk/egui)
 - [PolyMeilex](https://github.com/PolyMeilex), for native file dialog call package [rfd](https://github.com/PolyMeilex/rfd)
 - [HEJ0 aka BullyNoodles](https://github.com/HEJ0), for original idea [PackDev](https://github.com/HEJ0/PackDev)
+
+## License
+
+This source code is licensed *GNU General Public License v2.0*, see [LICENSE](https://github.com/expiteRz/mkw-distro-tool/blob/master/LICENSE).
